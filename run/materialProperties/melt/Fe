@@ -1,0 +1,28 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  4.1                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  | Input file written by Dennis Thuy               |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       IOobject;
+    location    "0";
+    object      Fe;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+MWMelt          55.845;  // Molecular weight of the melt
+RMelt           3000; // Melt compressibility factor
+rho0Melt        6945.1; // Reference density of the melt
+CpMelt          2460.5; // Melt heat capacity
+HfMelt          2.47e5; // Melt heat of fusion
+muMelt          0.0049; // Melt dynamic viscosity
+PrMelt          0.0283; // Melt Prandtl number
+sigmaMelt       1.8815; // Melt surface tension at 100K superheat
+TMelt           1808; // Melting temperature
+
+// ************************************************************************* //

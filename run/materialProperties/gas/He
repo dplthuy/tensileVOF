@@ -1,0 +1,24 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  4.1                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  | Input file written by Dennis Thuy               |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       IOobject;
+    location    "0";
+    object      He;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+MWGas       4.0;  // Molecular weight of the gas
+CpGas       5193;  // Heat capacity of the gas
+HfGas       0;  // Enthalpy of formation
+muGas       1.99e-5;  // Dynamic viscosity of the gas
+PrGas       0.68; // Prandtl number of the gas
+
+// ************************************************************************* //
