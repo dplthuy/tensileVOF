@@ -1,0 +1,116 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "./caseConditions"
+
+application     compressibleTensileForceInterIsoFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         $simTime;
+
+deltaT          $dtMax;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e5;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  8;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   8;
+
+runTimeModifiable yes;
+
+adjustTimeStep  no;
+
+maxCo           0.45;
+
+maxAlphaCo      0.45;
+
+maxDeltaT       $dtMax;
+
+functions
+{
+    writeAlpha
+	{
+		type			writeObjects;
+		libs			(utilityFunctionObjects);
+		enabled			true;
+
+		objects			(alpha.galinstan);
+		writeControl	runTime;
+		writeInterval   $writeFieldsEvery;
+	}
+
+    surfaces
+    {
+        type            surfaces;
+        libs            (geometricVoF sampling);
+        writeControl    runTime;
+	    writeInterval	#eval{$simTime/300};
+
+        surfaceFormat   raw;
+        fields          (interfaceCentre.galinstan);
+
+        interpolationScheme none;
+
+        surfaces
+        {
+            freeSurf
+            {
+                type            interface;
+                interpolate     false;
+            }
+        }
+    }
+
+	vtpsurfaces
+    {
+        type            surfaces;
+        libs            (geometricVoF sampling);
+        writeControl    runTime;
+        writeInterval   $writeFieldsEvery;
+
+        surfaceFormat   vtp;
+        fields          (Fsigma Fpj);
+
+        interpolationScheme none;
+
+        surfaces
+        {
+            freeSurf
+            {
+                type            interface;
+                interpolate     false;
+            }
+        }
+    }
+};
+
+libs ("libmyFiniteVolume" "libmyturbulenceModels" "libmyMeshTools" "libmyFieldFunctionObjects" "libmyDynamicFvMesh" "libmyAlphaFieldFunctions");
+// ************************************************************************* //

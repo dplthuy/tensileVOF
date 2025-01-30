@@ -1,0 +1,34 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  4.1                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  | Input file written by Dennis Thuy               |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       IOobject;
+    location    "0";
+    object      initialConditions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Variables
+r0		2e-3;
+epsilon		0.02;
+k		314.1592653589;
+
+sigma		0.073;
+
+#include "$FOAM_RUN/materialProperties/gas/air"
+#include "$FOAM_RUN/materialProperties/melt/water"
+
+// simulation controls
+nProc                   64; // number of processors for parallel computation
+dtMax                   1.25e-5; // Maximum capillary time step
+simTime                 0.22; // total simulated time in s
+writeFieldsEvery        #eval{$simTime/100}; // writes down field data every "writeFieldsEvery" seconds
+
+
