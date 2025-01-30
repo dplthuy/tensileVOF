@@ -1,0 +1,4 @@
+/* Run-time selectable implicitFunctions */
+implicitFunctions/sinPerturbedCylinder/sinPerturbedCylinderImplicitFunction.C
+
+LIB = $(FOAM_USER_LIBBIN)/libmyAlphaFieldFunctions

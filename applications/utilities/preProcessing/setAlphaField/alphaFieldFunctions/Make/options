@@ -1,0 +1,5 @@
+EXE_INC = \
+    -I$(FOAM_APP)/utilities/preProcessing/setAlphaField/alphaFieldFunctions/lnInclude
+
+LIB_LIBS = \
+    -lalphaFieldFunctions
