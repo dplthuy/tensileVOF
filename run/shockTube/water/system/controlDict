@@ -1,0 +1,118 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     compressibleTensileForceInterIsoFoam;
+
+startFrom       latestTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         7e-3;
+
+deltaT          2.6e-8;
+
+writeControl    adjustableRunTime;
+
+writeInterval   2;
+
+purgeWrite      0;
+
+writeFormat     binary;
+
+writePrecision  8;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   10;
+
+runTimeModifiable yes;
+
+adjustTimeStep  no;
+
+maxCo           0.5;
+maxAlphaCo      0.5;
+maxDeltaT       1;
+
+functions
+{
+	collectorPlane22_2mm
+    {
+    	type		extractEulerianParticlesLBAMR;
+    	libs		(myFieldFunctionObjects);
+    	faceZone	collectorPlane22_2mm;
+    	alpha		alpha.H2O;
+	alphaThreshold  1e-8;
+
+
+		writePrecision	6;
+		writeToFile	true;
+		useUserTime	false;
+
+		enabled		true;
+		log		true;
+
+		writeControl	writeTime;
+    }
+    	
+	waterMass
+        {
+                type            multiply;
+                libs            (fieldFunctionObjects);
+                fields          (alpha.H2O thermo:rho.H2O);
+		executeControl  timeStep;
+                executeInterval 10;
+                writeControl    writeTime;
+
+        }
+
+        totalLiquidMass
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+
+        operation       volIntegrate;
+        fields
+        (
+                multiply(alpha.H2O,thermo:rho.H2O)
+        );
+
+        writeFields     false;
+                enabled true;
+	executeControl	timeStep;
+	executeInterval	10;
+        log             true;
+        valueOutput     true;
+    }
+    	
+	writeRestart
+	{
+		type			writeObjects;
+		libs			(utilityFunctionObjects);
+		enabled			true;
+
+		objects			(alpha.H2O p p_rgh T U boundary faces faceZones neighbour owner points cellLevel pointLevel k nut alphat);
+		writeControl	runTime;
+		writeInterval	0.1e-3;
+	}
+
+}
+
+libs ("libmyturbulenceModels" "libmyMeshTools" "libmyFieldFunctionObjects" "libmyDynamicFvMesh" "libmyFiniteVolume");
+// ************************************************************************* //
