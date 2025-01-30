@@ -1,0 +1,22 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+restore0Dir
+
+runApplication foamCleanPolyMesh
+
+runApplication blockMesh
+
+runApplication decomposePar
+
+runParallel $(getApplication)
+
+runParallel postProcess -func 'mag(UMean)' -latestTime
+
+runParallel postProcess -func 'grad(mag(UMean))' -latestTime
+
+runParallel foamToVTK -patches 'cylinder' -latestTime -fields '(grad(mag(UMean)) vorticityMean)'
+
+#------------------------------------------------------------------------------
