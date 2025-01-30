@@ -1,0 +1,335 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2015-2018 OpenCFD Ltd.
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+              Modified work | 2019 Andy Spitzenberger
+              Modified work | 2022 Dennis Thuy
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+Class
+    Foam::functionObjects::extractEulerianParticlesLBAMR
+
+Group
+    grpFieldFunctionObjects
+
+Description
+    Generates particle size information from Eulerian calculations, e.g. VoF.
+
+    Reference
+    \verbatim
+        Spitzenberger, A., Neumann, S., Heinrich, M., Schwarze, R. (2019)
+        Particle Detection in VOF-Simulations with OpenFOAM
+        SoftwareX
+    \endverbatim
+
+Usage
+    \verbatim
+    extractEulerianParticlesLBAMR1
+    {
+        type            extractEulerianParticlesLBAMR;
+        libs            ("libExtractEulerianParticlesMod.so");
+        ...
+        faceZone        f0;
+        nLocations      10;
+        alpha           alpha.water;
+        U               U;
+        rho             rho;
+        phi             phi;
+    }
+    \endverbatim
+
+    where the entries comprise:
+    \table
+        Property     | Description             | Required | Default value
+        type         | type name: extractEulerianParticlesLBAMR | yes |
+        faceZone     | Name of faceZone used as collection surface | yes |
+        alpha        | Name of phase indicator field | yes |
+        alphaThreshold | Threshold for alpha field | no | 0.1 |
+        nLocations   | Number of injection bins to generate  | no | 0 |
+        U            | Name of velocity field  | no | U |
+        rho          | Name of density field   | no | rho |
+        phi          | Name of flux field      | no | phi |
+        minDiameter  | min diameter            | no | small |
+        maxDiameter  | max diameter            | no | great |
+    \endtable
+
+SourceFiles
+    extractEulerianParticlesLBAMR.C
+
+\*---------------------------------------------------------------------------*/
+
+#ifndef functionObjects_extractEulerianParticlesLBAMR_H
+#define functionObjects_extractEulerianParticlesLBAMR_H
+
+#include "dynamicMultiDimRefineFvMeshFunctionObject.H"
+#include "writeFile.H"
+#include "runTimeSelectionTables.H"
+#include "polyMesh.H"
+#include "surfaceFieldsFwd.H"
+#include "globalIndex.H"
+#include "eulerianParticleMod.H"
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+namespace functionObjects
+{
+/*---------------------------------------------------------------------------*\
+           Class extractEulerianParticlesLBAMRFunctionObject Declaration
+\*---------------------------------------------------------------------------*/
+
+class extractEulerianParticlesLBAMR
+:
+    public dynamicMultiDimRefineFvMeshFunctionObject,
+    public writeFile
+{
+
+    
+protected:
+
+    // Protected data
+
+        // faceZone info
+
+            //- Name of faceZone to sample
+            word faceZoneName_;
+
+            //- Index of the faceZone
+            label zoneID_;
+
+            //- Patch indices where faceZone face intersect patch
+            labelList patchIDs_;
+
+            //- Patch face indices where faceZone face intersect patch
+            labelList patchFaceIDs_;
+            
+            //- Face zone from last iteration
+            labelList faceZone0_;
+            
+        // File streams
+            //- extracted particle data
+            autoPtr<OFstream> extractEulerianFilePtr_;
+        
+        // Field names
+
+            //- Name of phase fraction field
+            word alphaName_;
+
+            //- Value of phase fraction used to identify particle boundaries
+            scalar alphaThreshold_;
+
+            //- Name of the velocity field, default = U
+            word UName_;
+
+            //- Name of the density field, default = rho
+            word rhoName_;
+
+            //- Name of the flux field, default ="rho"
+            word phiName_;
+
+
+        // Agglomeration
+
+            //- Number of sample locations to generate
+            label nInjectorLocations_;
+
+            //- Agglomeration addressing from fine to coarse (local proc only)
+            labelList fineToCoarseAddr_;
+
+            //- Global coarse face addressing
+            globalIndex globalCoarseFaces_;
+
+
+        // Particle collection info
+
+            //- Region indices in faceZone faces from last iteration
+            labelList regions0_;
+
+            //- Number of regions from last iteration
+            label nRegions0_;
+
+            //- Particle properties (partial, being accumulated)
+            List<eulerianParticleMod> particles_;
+
+            //- Map from region to index in particles_ list
+            Map<label> regionToParticleMap_;
+
+            //- Minimum diameter (optional)
+            //  Can be used to filter out 'small' particles
+            scalar minDiameter_;
+
+            //- Maximum diameter (optional)
+            //  Can be used to filter out 'large' particles
+            scalar maxDiameter_;
+
+
+        // Statistics
+
+            //- Total number of collected particles
+            label nCollectedParticles_;
+
+            //- Total collected volume [m3]
+            scalar collectedVolume_;
+
+            //- Total number of discarded particles
+            label nDiscardedParticles_;
+
+            //- Total discarded volume [m3]
+            scalar discardedVolume_;
+
+            //- Total Volume available for particles regarding alpha_t
+            scalar availableVolume_;
+
+            //- Total Volume through faceZone [m3]
+            scalar totalVolume_;
+
+
+    // Protected Member Functions
+
+        //- Create output file
+        void createFiles();
+        
+        //- Write header for the data file
+        void writeDataFileHeader(Ostream& os) const;
+        
+        //- Check that the faceZone is valid
+        virtual void checkFaceZone();
+
+        //- Initialise the particle collection bins
+        virtual void initialiseBins();
+
+        //- Return the volumetric flux
+        virtual tmp<surfaceScalarField> phiU() const;
+
+        //- Set the blocked faces, i.e. where alpha > alpha threshold value
+        virtual void setBlockedFaces
+        (
+            const surfaceScalarField& alphaf,
+            const faceZone& fz,
+            boolList& blockedFaces
+        );
+	
+	//- Map the old regions to new faceZone mesh
+	virtual void applyFaceZoneFaceMap
+	(
+	     const faceZone& fz,
+	     const boolList& blockedFaces,
+	     labelList& faceZoneFaceMap
+	);
+		
+        //- Calculate the addressing between regions between iterations
+        //- Returns the number of active regions (particles)
+        virtual void calculateAddressing
+        (
+            const label nRegionsOld,
+            const label nRegionsNew, 
+            const scalar time,
+            const bool meshChanged,
+            const labelList& faceZoneFaceMap,
+            labelList& regionFaceIDs
+        );
+
+        //- Collect particles that have passed through the faceZone
+        virtual void collectParticles
+        (
+            const scalar time,
+            const boolList& collectParticle
+        );
+
+        //- Process latest region information
+        virtual void accumulateParticleInfo
+        (
+            const surfaceScalarField& alphaf,
+            const surfaceScalarField& phi,
+            const labelList& regionFaceIDs,
+            const faceZone& fz
+        );
+
+        template<class Type>
+        inline Type faceValue
+        (
+            const GeometricField<Type, fvsPatchField, surfaceMesh>& field,
+            const label localFaceI,
+            const label globalFaceI
+        ) const;
+
+        //- No copy construct
+        extractEulerianParticlesLBAMR(const extractEulerianParticlesLBAMR&) = delete;
+
+        //- No copy assignment
+        void operator=(const extractEulerianParticlesLBAMR&) = delete;
+
+
+public:
+
+    // Static data members
+
+        //- Runtime type information
+        TypeName("extractEulerianParticlesLBAMR");
+
+
+    // Constructors
+
+        //- Construct from components
+        extractEulerianParticlesLBAMR
+        (
+            const word& name,
+            const Time& runTime,
+            const dictionary& dict
+        );
+
+
+    //- Destructor
+    virtual ~extractEulerianParticlesLBAMR() = default;
+
+
+    // Member Functions
+
+        //- Read the field min/max data
+        virtual bool read(const dictionary&);
+
+        //- Execute
+        virtual bool execute();
+
+        //- Write
+        virtual bool write();
+};
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace functionObjects
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "extractEulerianParticlesLBAMRTemplates.C"
+#endif
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
+// ************************************************************************* //

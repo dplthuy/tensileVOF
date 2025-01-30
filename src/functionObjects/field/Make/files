@@ -1,0 +1,4 @@
+extractEulerianParticlesMod/extractEulerianParticlesAMR/extractEulerianParticlesAMR.C
+extractEulerianParticlesMod/extractEulerianParticlesLBAMR/extractEulerianParticlesLBAMR.C
+
+LIB = $(FOAM_USER_LIBBIN)/libmyFieldFunctionObjects
