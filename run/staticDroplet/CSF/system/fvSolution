@@ -1,0 +1,116 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "./caseConditions"
+
+solvers
+{
+    "alpha.water.*"
+    {
+        isoFaceTol      1e-8;
+        surfCellTol     1e-8;
+        nAlphaBounds    3;
+        snapTol         1e-8;
+        clip            true;
+        writeSurfCells  false;
+        writeBoundedCells false;
+        writeIsoFaces   false;
+        reconstructionScheme plicRDF; // isoAlpha
+
+        nAlphaSubCycles 1;
+	nAlphaCorr	1;
+        cAlpha          1; // Read by interIsoFoam but not used
+    }
+    
+   "pcorr.*"
+    {
+        solver          PCG;
+        preconditioner
+        {
+            preconditioner  GAMG;
+            tolerance       1e-05;
+            relTol          0;
+            smoother        DICGaussSeidel;
+        }
+        tolerance       1e-05;
+        relTol          0;
+        maxIter         100;
+    }
+
+    ".*(rho|rhoFinal)"
+    {
+        solver          diagonal;
+    }
+
+    p_rgh
+    {
+        solver          GAMG;
+        tolerance       1e-10;
+        relTol          0.001;
+        smoother        DIC;
+    }
+
+    p_rghFinal
+    {
+        solver          PCG;
+        preconditioner
+        {
+            preconditioner  GAMG;
+            tolerance       1e-07;
+            relTol          0;
+            nVcycles        2;
+            smoother        DICGaussSeidel;
+            nPreSweeps      2;
+        }
+        tolerance       1e-10;
+        relTol          0;
+        maxIter         50;
+    }
+
+    UFinal
+    {
+        solver          smoothSolver;
+        smoother        GaussSeidel;
+        tolerance       1e-06;
+        relTol          0;
+        nSweeps         1;
+    }
+
+    "(T|k|B|nuTilda).*"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-08;
+        relTol          0;
+    }
+}
+
+pRefCoord      #eval{0.1*$diameter};
+
+PIMPLE
+{
+    momentumPredictor yes;
+    nCorrectors     3;
+    nNonOrthogonalCorrectors 0;
+    correctPhi     yes;
+
+    
+    pRefPoint      ($pRefCoord $pRefCoord $pRefCoord);
+    pRefValue      1e5;
+}
+
+
+// ************************************************************************* //

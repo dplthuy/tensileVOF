@@ -1,0 +1,130 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "./caseConditions"
+
+application     compressibleInterIsoFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         $simTime;
+
+deltaT          $dtMax;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  10;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   10;
+
+runTimeModifiable yes;
+
+adjustTimeStep  no;
+
+maxCo           0.5;
+
+maxAlphaCo      0.5;
+
+maxDeltaT       $dtMax;
+
+functions
+{
+    pressureMinMax
+    {
+        type            fieldMinMax;
+        libs            (fieldFunctionObjects);
+        mode            magnitude;
+        fields          (p);
+        location        true;
+        executeControl  timeStep;
+        executeInterval 1;
+    }
+
+    gasVelocity
+    {
+        type            multiply;
+        libs            (fieldFunctionObjects);
+        fields          (alpha.gas U);
+
+        result          U.gas;
+        enabled         true;
+        executeControl  timeStep;
+        executeInterval 1;
+	    writeControl	writeTime;
+    }
+
+    velocityMinMax
+    {
+        type            fieldMinMax;
+        libs            (fieldFunctionObjects);
+        mode            magnitude;
+        fields          (U.gas);
+        location        true;
+        executeControl  timeStep;
+        executeInterval 1;
+    }
+
+    velocityAverage
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+
+        fields          (U.gas);
+
+        operation       volAverage;
+        regionType      all;
+
+        executeControl  timeStep;
+        executeInterval 1;
+
+        writeFields     false;
+    }
+
+    CSFpressureJump
+    {
+        type            volFieldValue;
+        libs            (fieldFunctionObjects);
+
+        fields          (p_rgh);
+
+        operation       weightedAverage;
+        weightField     alpha.water;
+        regionType      all;
+
+        executeControl  timeStep;
+        executeInterval 1;
+
+        writeFields     false;
+    }
+
+};
+
+libs ("libmyFiniteVolume" "libmyturbulenceModels" "libmyMeshTools" "libmyFieldFunctionObjects" "libmyDynamicFvMesh");
+// ************************************************************************* //
