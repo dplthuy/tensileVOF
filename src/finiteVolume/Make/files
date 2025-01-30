@@ -1,0 +1,4 @@
+functionObjects/dynamicRefineFvMeshModFunctionObject/dynamicRefineFvMeshModFunctionObject.C
+functionObjects/dynamicMultiDimRefineFvMeshFunctionObject/dynamicMultiDimRefineFvMeshFunctionObject.C
+
+LIB = $(FOAM_USER_LIBBIN)/libmyFiniteVolume
