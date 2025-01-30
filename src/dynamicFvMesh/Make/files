@@ -1,0 +1,26 @@
+dynamicRefineFvMeshMod/dynamicRefineFvMeshMod.C
+
+dynMDRefMesh = dynamicMultiDimRefineFvMesh
+
+$(dynMDRefMesh)/hexRef/hexRef.C
+$(dynMDRefMesh)/hexRef/hexRefData.C
+$(dynMDRefMesh)/hexRef/refinementHistoryMultiDim.C
+$(dynMDRefMesh)/hexRef/hexRefNew.C
+
+$(dynMDRefMesh)/hexRef/hexRef3D/hexRef3D.C
+$(dynMDRefMesh)/hexRef/hexRef4/hexRef4.C
+$(dynMDRefMesh)/hexRef/hexRef4Axi/hexRef4Axi.C
+
+$(dynMDRefMesh)/adaptCriteria/adaptCriteria.C
+$(dynMDRefMesh)/adaptCriteria/fieldBounds/fieldBounds.C
+$(dynMDRefMesh)/adaptCriteria/geometric/geometric.C
+$(dynMDRefMesh)/adaptCriteria/composedAdaptCriteria/composedAdaptCriteria.C
+
+$(dynMDRefMesh)/dynamicMultiDimRefineFvMesh/dynamicMultiDimRefineFvMesh.C
+$(dynMDRefMesh)/dynamicMultiDimRefineBalancedFvMesh/fvMeshDistributeAddPatch/fvMeshDistributeAddPatch.C
+$(dynMDRefMesh)/dynamicMultiDimRefineBalancedFvMesh/dynamicMultiDimRefineBalancedFvMesh.C
+
+$(dynMDRefMesh)/refinementHistoryMultiDimConstraint/refinementHistoryMultiDimConstraint.C
+
+
+LIB = $(FOAM_USER_LIBBIN)/libmyDynamicFvMesh
