@@ -1,0 +1,38 @@
+#!/bin/sh
+cd "${0%/*}" || exit                                # Run from this directory
+. ${WM_PROJECT_DIR:?}/bin/tools/RunFunctions        # Tutorial run functions
+#------------------------------------------------------------------------------
+
+restore0Dir
+
+runApplication foamCleanPolyMesh
+
+runApplication blockMesh
+
+runApplication createPatch -overwrite
+
+runApplication topoSet -dict system/topoSetDict.gasInlet
+
+mv log.topoSet log.topoSet.gasInlet
+
+runApplication refineMesh -dict system/refineMeshDict.gasInlet -overwrite
+
+runApplication topoSet -dict system/topoSetDict.samplePlanes
+
+mv log.topoSet log.topoSet.samplePlanes
+
+restore0Dir
+
+runApplication setAlphaField
+
+runApplication setFields
+
+runApplication decomposePar -fileHandler collated
+
+runParallel $(getApplication) -fileHandler collated
+
+runApplication reconstructParMesh -fileHandler collated
+
+runApplication reconstructPar -fileHandler collated
+
+#------------------------------------------------------------------------------

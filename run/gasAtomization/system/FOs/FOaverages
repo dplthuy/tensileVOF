@@ -1,0 +1,42 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+averages
+{
+
+	type		fieldAverage;
+	libs		(fieldFunctionObjects);
+	writeControl	runTime;
+	writeInterval	$writeMeanFieldsEvery;
+	
+	timeStart	0.0;
+	
+	fields
+	(
+	   Ugas
+	   {
+	        mean		on;
+	   	    prime2Mean	on;
+	   	    base		time;
+	   }
+
+	   alpha.melt
+	   {
+		    mean		on;
+		    prime2Mean	off;
+		    base		time;
+	   }
+	);
+    // Optional entries
+    restartOnRestart    false;
+    restartOnOutput     false;
+    periodicRestart     false;
+}
+
+
+// ************************************************************************* //

@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  4.1                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  | Input file written by Dennis Thuy               |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       IOobject;
+    location    "0";
+    object      initialConditions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// simulation controls
+
+nProc                   576; // number of processors for parallel computation
+simStartTime            0.0;
+simEndTime              #eval{$simStartTime+1e-3}; // total simulated time in s
+writeMeanFieldsEvery    2.50e-4; // writes down mean field data every "writeFieldsEvery" seconds
+writeRestartEvery       3.33e-5; // writes down restart fied data every "writeRestartEvery" seconds
+writeCloudEvery         2.0e-5; // writes down cloud data every "writeCloudEvery" seconds
+writeVTPSurfaceEvery    2.0e-5; // writes vtp surface every "writeVTPSurfaceEvery" seconds
+
+// gas properties
+#include "$FOAM_RUN/materialProperties/gas/N2"
+pAtm                    1e5;
+pAtomizationGas         10e5; // inlet pressure of the atomization gas
+TAtomizationGas         300; // inlet temperature of the atomization gas
+
+// melt properties
+#include "$FOAM_RUN/materialProperties/melt/Al"
+meltFlowRate            7.25e-6; // Flow rate of the melt, adjusted to 1/4 of inlet area
+meltInletTemperature    #eval{$TMelt + 100}; // Melt inlet with 100K superheat

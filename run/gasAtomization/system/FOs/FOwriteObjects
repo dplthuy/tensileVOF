@@ -1,0 +1,30 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2206                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+writeMesh
+{
+	type			writeObjects;
+	libs			(utilityFunctionObjects);
+	enabled			true;
+
+	objects			(boundary faces faceZones neighbour owner points cellLevel pointLevel);
+	writeControl	runTime;
+	writeInterval   $writeRestartEvery;
+}
+
+writeRestart
+{
+	type			writeObjects;
+	libs			(utilityFunctionObjects);
+	enabled			true;
+
+	objects			(alpha.melt alphat k nut p p_rgh T U refinementHistory);
+	writeControl	runTime;
+	writeInterval   $writeRestartEvery;
+}
+
+// ************************************************************************* //
