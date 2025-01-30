@@ -1,0 +1,16 @@
+#!/bin/sh
+
+wclean $WM_PROJECT_USER_DIR/applications/solvers/multiphase/compressibleTensileForceInterIsoFoam/tensileForceTwoPhaseMixtureThermo
+wclean $WM_PROJECT_USER_DIR/applications/solvers/multiphase/compressibleTensileForceInterIsoFoam/compressibleTensileForceInterPhaseTransportModel
+wclean $WM_PROJECT_USER_DIR/applications/solvers/multiphase/compressibleTensileForceInterIsoFoam 
+wclean $WM_PROJECT_USER_DIR/applications/utilities/preProcessing/setAlphaField/alphaFieldFunctions
+
+wclean $WM_PROJECT_USER_DIR/src/transportModels/tensileForceMethod
+wclean $WM_PROJECT_USER_DIR/src/TurbulenceModels/turbulenceModels/LES
+wclean $WM_PROJECT_USER_DIR/src/functionObjects/field
+wclean $WM_PROJECT_USER_DIR/src/finiteVolume/cfdTools
+wclean $WM_PROJECT_USER_DIR/src/finiteVolume
+wclean $WM_PROJECT_USER_DIR/src/eulerianParticleMod
+wclean $WM_PROJECT_USER_DIR/src/dynamicFvMesh
+wclean $WM_PROJECT_USER_DIR/src/meshTools/modRegionSplit
+wclean $WM_PROJECT_USER_DIR/src/meshTools

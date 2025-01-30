@@ -1,0 +1,15 @@
+#!/bin/sh
+
+wmake $WM_PROJECT_USER_DIR/src/meshTools
+wmake $WM_PROJECT_USER_DIR/src/meshTools/modRegionSplit
+wmake $WM_PROJECT_USER_DIR/src/dynamicFvMesh
+wmake $WM_PROJECT_USER_DIR/src/eulerianParticleMod
+wmake $WM_PROJECT_USER_DIR/src/transportModels/tensileForceMethod
+wmake $WM_PROJECT_USER_DIR/src/finiteVolume
+wmake $WM_PROJECT_USER_DIR/src/finiteVolume/cfdTools
+wmake $WM_PROJECT_USER_DIR/src/functionObjects/field
+wmake $WM_PROJECT_USER_DIR/src/TurbulenceModels/turbulenceModels/LES
+wmake $WM_PROJECT_USER_DIR/applications/utilities/preProcessing/setAlphaField/alphaFieldFunctions
+wmake $WM_PROJECT_USER_DIR/applications/solvers/multiphase/compressibleTensileForceInterIsoFoam/tensileForceTwoPhaseMixtureThermo
+wmake $WM_PROJECT_USER_DIR/applications/solvers/multiphase/compressibleTensileForceInterIsoFoam/compressibleTensileForceInterPhaseTransportModel
+wmake $WM_PROJECT_USER_DIR/applications/solvers/multiphase/compressibleTensileForceInterIsoFoam
