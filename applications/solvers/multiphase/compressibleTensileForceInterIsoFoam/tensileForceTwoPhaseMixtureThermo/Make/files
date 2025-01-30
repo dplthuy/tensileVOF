@@ -1,0 +1,3 @@
+tensileForceTwoPhaseMixtureThermo.C
+
+LIB = $(FOAM_USER_LIBBIN)/libtensileForceTwoPhaseMixtureThermo
