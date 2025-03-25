@@ -117,7 +117,7 @@ void Foam::tensileForceMethod::calculateTensileForce
     List<scalar>& interfacePressureJump
 )
 {    
-    Fsigma_ = dimensionedVector(dimMass/(dimArea*sqr(dimTime)), Zero);
+    Fsigma_ = dimensionedVector(dimMass*dimLength/sqr(dimTime), Zero);
     sigma_ = sigmaPtr_->sigma().ref();
 
     // Initialize CPC stencil for nb normal search. Has to be initialized here because of parallel communication (all procs must reach this point)
@@ -146,7 +146,7 @@ void Foam::tensileForceMethod::calculateTensileForce
                 if (mag(surfNormal_[localCelli]) != 0)
                 {
                     vector FsigmaCelli = plicTensileForce(localCelli, mapSurfNormal, mapCellCentre, CPCDistribute);
-                    Fsigma_[localCelli] = FsigmaCelli / mesh_.V()[localCelli];
+                    Fsigma_[localCelli] = FsigmaCelli;
 
                     vector n = surfNormal_[localCelli]/mag(surfNormal_[localCelli]);
                     interfaceFsigmaSum[interfacei] += FsigmaCelli & n;
@@ -450,7 +450,7 @@ void Foam::tensileForceMethod::pressureJumpCorrection
     const List<scalar>& interfacePressureJump
 )
 {
-    Fpj_ = dimensionedVector(dimMass/(dimArea*sqr(dimTime)), Zero);
+    Fpj_ = dimensionedVector(dimMass*dimLength/sqr(dimTime), Zero);
 
     forAll(connectedInterfaceLabels, interfacei)
     {
@@ -464,14 +464,14 @@ void Foam::tensileForceMethod::pressureJumpCorrection
 
                 if (mag(surfNormal_[localCelli]) != 0)
                 {
-                    Fpj_[localCelli] = - interfacePressureJump[interfacei] * surfNormal_[localCelli] / mesh_.V()[localCelli];
+                    Fpj_[localCelli] = - interfacePressureJump[interfacei] * surfNormal_[localCelli];
                 }
             }
         }
     }
 }
 
-void Foam::tensileForceMethod::mapInterfaceForceDensity()
+void Foam::tensileForceMethod::mapInterfaceForce()
 {
     zoneDistribute& CPCDistribute = zoneDistribute::New(mesh_);
     CPCDistribute.setUpCommforZone(nextToInterface_, false);
@@ -493,7 +493,7 @@ void Foam::tensileForceMethod::mapInterfaceForceDensity()
         mesh_,
         vector(Zero)
     );
-    interfaceForce_ = dimensionedVector(dimMass/(sqr(dimTime)*dimArea), Zero);
+    interfaceForceDensity_ = dimensionedVector(dimMass/(dimArea * sqr(dimTime)), Zero);
     const boolList& interfaceCell = surf_.interfaceCell();
 
     // Set weight totals for interface cells
@@ -546,7 +546,7 @@ void Foam::tensileForceMethod::mapInterfaceForceDensity()
                     {
                         d = SMALL;
                     }
-                    interfaceForce_[celli] += (rho/d) * weightForce;
+                    interfaceForceDensity_[celli] += (rho/d) * weightForce / mesh_.V()[celli];
                 }
             }
         }
@@ -555,21 +555,21 @@ void Foam::tensileForceMethod::mapInterfaceForceDensity()
 
 void Foam::tensileForceMethod::decomposeForceToCellFaces()
 {
-    interfaceForcef_ = dimensionedVector(dimMass/(dimArea*sqr(dimTime)), Zero);
+    interfaceForceDensityf_ = dimensionedVector(dimMass/(dimArea*sqr(dimTime)), Zero);
 
-    // Create the objects required for syncronizing the surface field over the different processors
-    vectorField allSurfForcef(mesh_.nFaces(), Zero);
     const surfaceVectorField::Boundary& SfBf = mesh_.Sf().boundaryField();
     const surfaceVectorField::Boundary& SfHatBf = SfHat_.boundaryField();
 
     surfaceScalarField rhof = fvc::interpolate(rho_);
     const surfaceScalarField::Boundary& rhofBf = rhof.boundaryField();
 
-    slicedSurfaceVectorField intForce
+    // Create the objects required for syncronizing the surface field over the different processors
+    vectorField allSurfForceDensityf(mesh_.nFaces(), Zero);
+    slicedSurfaceVectorField intForceDensity
     (
         IOobject
         (
-            "intForcef",
+            "intForceDensityf",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -577,20 +577,19 @@ void Foam::tensileForceMethod::decomposeForceToCellFaces()
             false
         ),
         mesh_,
-        dimMass/(sqr(dimTime)*dimArea),
-        allSurfForcef,
+        dimMass/(dimArea*sqr(dimTime)),
+        allSurfForceDensityf,
         false
     );
 
     // Split in internal and boundary field
-    vectorField& intForceIf = intForce;
-    surfaceVectorField::Boundary& intForceBf = intForce.boundaryFieldRef();
-    
+    vectorField& intForceDensityIf = intForceDensity;
+    surfaceVectorField::Boundary& intForceDensityBf = intForceDensity.boundaryFieldRef();
+
     forAll(mesh_.cells(), celli)
     {
-        if (mag(interfaceForce_[celli]) != 0)
+        if (mag(interfaceForceDensity_[celli]) != 0)
         {
-
             const labelList& cellFaces = mesh_.cells()[celli];
 
             scalarList forceDecompositionX(cellFaces.size(), Zero);
@@ -626,7 +625,7 @@ void Foam::tensileForceMethod::decomposeForceToCellFaces()
                     }
                 }
 
-                scalar faceNormalComponent = SfHati & interfaceForce_[celli];
+                scalar faceNormalComponent = SfHati & interfaceForceDensity_[celli];
                 forceDecompositionX[cellFacei] = faceNormalComponent * rhofi * SfHati.x() * mag(Sfi);
                 forceDecompositionY[cellFacei] = faceNormalComponent * rhofi * SfHati.y() * mag(Sfi);
                 forceDecompositionZ[cellFacei] = faceNormalComponent * rhofi * SfHati.z() * mag(Sfi);
@@ -640,34 +639,35 @@ void Foam::tensileForceMethod::decomposeForceToCellFaces()
             {
                 label meshFacei = cellFaces[cellFacei];
 
-                vector weighedForce = interfaceForce_[celli];
+                vector weighedForceDensity = interfaceForceDensity_[celli];
                 if (forceDecompositionSumX != 0.0)
                 {
-                    weighedForce.x() *= mag(forceDecompositionX[cellFacei] / forceDecompositionSumX);
+                    weighedForceDensity.x() *= mag(forceDecompositionX[cellFacei] / forceDecompositionSumX);
                 }
                 if (forceDecompositionSumY != 0.0)
                 {
-                    weighedForce.y() *= mag(forceDecompositionY[cellFacei] / forceDecompositionSumY);
+                    weighedForceDensity.y() *= mag(forceDecompositionY[cellFacei] / forceDecompositionSumY);
                 }
                 if (forceDecompositionSumZ != 0.0)
                 {
-                    weighedForce.z() *= mag(forceDecompositionZ[cellFacei] / forceDecompositionSumZ);
+                    weighedForceDensity.z() *= mag(forceDecompositionZ[cellFacei] / forceDecompositionSumZ);
                 }
 
                 if (mesh_.isInternalFace(meshFacei))
                 {
-                    intForceIf[meshFacei] += weighedForce;   
+                    intForceDensityIf[meshFacei] += weighedForceDensity;
                 }
                 else
                 {
                     label patchi = mesh_.boundaryMesh().whichPatch(meshFacei);
-                    vectorField& intForcePf = intForceBf[patchi];
+                    vectorField& intForceDensityPf = intForceDensityBf[patchi];
+
                     const polyPatch& pp = mesh_.boundaryMesh()[patchi];
                     if (!isA<emptyPolyPatch>(pp))
                     {
                         label patchFacei = meshFacei - pp.start();
 
-                        intForcePf[patchFacei] += weighedForce;
+                        intForceDensityPf[patchFacei] += weighedForceDensity;
                     }
                 }
             }
@@ -675,9 +675,9 @@ void Foam::tensileForceMethod::decomposeForceToCellFaces()
     }
     
     //Synchronize across processors
-    syncTools::syncFaceList(mesh_, allSurfForcef,plusEqOp<vector>());
+    syncTools::syncFaceList(mesh_, allSurfForceDensityf, plusEqOp<vector>());
 
-    interfaceForcef_ += intForce;
+    interfaceForceDensityf_ += intForceDensity;
 }
 
 
@@ -732,7 +732,7 @@ Foam::tensileForceMethod::tensileForceMethod
             mesh_
         ),
         mesh_,
-        dimensionedVector(dimMass/(dimArea*sqr(dimTime)), Zero)
+        dimensionedVector(dimMass*dimLength/sqr(dimTime), Zero)
     ),
     Fpj_
     (
@@ -743,24 +743,24 @@ Foam::tensileForceMethod::tensileForceMethod
             mesh_
         ),
         mesh_,
-        dimensionedVector(dimMass/(dimArea*sqr(dimTime)), Zero)
+        dimensionedVector(dimMass*dimLength/sqr(dimTime), Zero)
     ),
-    interfaceForce_
+    interfaceForceDensity_
     (
         IOobject
         (
-            "interfaceForce",
+            "interfaceForceDensity",
             alpha1_.time().timeName(),
             mesh_
         ),
         mesh_,
         dimensionedVector(dimMass/(dimArea*sqr(dimTime)), Zero)
     ),
-    interfaceForcef_
+    interfaceForceDensityf_
     (
         IOobject
         (
-            "interfaceForcef",
+            "interfaceForceDenistyf",
             alpha1_.time().timeName(),
             mesh_
         ),
@@ -802,7 +802,7 @@ void Foam::tensileForceMethod::interfaceForce
 
     calculateTensileForce(connectedInterfaceLabels, interfacePressureJump);
     pressureJumpCorrection(connectedInterfaceLabels, interfacePressureJump);
-    mapInterfaceForceDensity();
+    mapInterfaceForce();
     decomposeForceToCellFaces();
 }
 

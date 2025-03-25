@@ -86,8 +86,8 @@ class tensileForceMethod
         volVectorField Fpj_;
 
         // Vector fields of resulting force density at the interface
-        volVectorField interfaceForce_;
-        surfaceVectorField interfaceForcef_;
+        volVectorField interfaceForceDensity_;
+        surfaceVectorField interfaceForceDensityf_;
         
         //geometric vof surface access
         const reconstructionSchemes& surf_;
@@ -165,7 +165,7 @@ class tensileForceMethod
             const List<scalar>& interfacePressureJump
         );
 
-        void mapInterfaceForceDensity();
+        void mapInterfaceForce();
 
         void decomposeForceToCellFaces();
 
@@ -192,10 +192,17 @@ public:
             return deltaN_;
         }
 
-        tmp<surfaceScalarField> surfaceTensionForce() const
+        tmp<volVectorField> surfaceTensionForceDensity() const
         {
-            return interfaceForcef_ & SfHat_;
+            return interfaceForceDensity_;
         }
+
+        tmp<surfaceScalarField> cellFaceSurfaceTensionForceDensity() const
+        {
+            return interfaceForceDensityf_ & SfHat_;
+        }
+
+        
       
         //- Indicator of the proximity of the interface
         //  Field values are 1 near and 0 away for the interface.

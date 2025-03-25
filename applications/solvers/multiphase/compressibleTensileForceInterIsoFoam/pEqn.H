@@ -13,7 +13,7 @@
     surfaceScalarField phig
     (
         (
-          interfaceProperties.surfaceTensionForce()
+          interfaceProperties.cellFaceSurfaceTensionForceDensity()
           - ghf*fvc::snGrad(rho)
         )*rAUf*mesh.magSf()
     );
