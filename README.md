@@ -1,7 +1,7 @@
 # tensileVOF
 Code repository of the Tensile Force method as described in :
 
-* D.P.L. Thuy, N.G. Deen, J.J.C. Remmers, G. Finotello, "Volume-of-fluid simulations of multiphase flows with high surface tension and curvature using a tensile force approach with pressure jump correction", International Journal of Multiphase Flow, 2026, [https://doi.org/10.1016/j.ijmultiphaseflow.2025.105535](https://doi.org/10.1016/j.ijmultiphaseflow.2025.105535) *
+- D.P.L. Thuy, N.G. Deen, J.J.C. Remmers, G. Finotello, "Volume-of-fluid simulations of multiphase flows with high surface tension and curvature using a tensile force approach with pressure jump correction", International Journal of Multiphase Flow, 2026, [https://doi.org/10.1016/j.ijmultiphaseflow.2025.105535](https://doi.org/10.1016/j.ijmultiphaseflow.2025.105535)
 
 ## Installation instructions
 - Source code and test cases are intended for use with a compiled version of [OpenFOAM v2406](https://www.openfoam.com/news/main-news/openfoam-v2406). Compatibility with any other version of OpenFOAM is not guaranteed.
